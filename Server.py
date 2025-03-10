@@ -1,6 +1,8 @@
 import hashlib
+import json
 import os
 import queue
+import socket
 import socket as sk
 import threading
 import time
@@ -11,7 +13,6 @@ from tqdm import tqdm
 import Check
 import Process
 from LocalizationForVersion_V0_0_2 import Languages as LFV
-from SocketController import SocketController
 
 GetSize = os.path.getsize
 PathJoin = os.path.join
@@ -19,54 +20,73 @@ PathJoin = os.path.join
 BASEDIR = "ServerCache"
 
 
-def torrent_server(skcon: SocketController, progress_bar: queue.Queue, chunks: queue.Queue, open_file: io.BytesIO, work: bool = True):
+def dumps(data):
+    try:
+        datat = json.dumps(data).encode("utf-8")
+        return datat
+    except:
+        print(data)
+        input()
+
+
+def loads(data):
+    return json.loads(data.decode("utf-8"))
+
+
+def isjson(data):
+    try:
+        json.loads(data.decode("utf-8"))
+    except ValueError:
+        return False
+    return True
+
+
+def torrent_server(conn: socket.socket, progress_bar: queue.Queue, chunks: queue.Queue, open_file: io.BytesIO,
+                   work: bool = True):
     while not work:
         time.sleep(0.1)
-    while not chunks.empty():
 
-        cid, max_b_size, b_num = chunks.get()
-        open_file.seek(b_num)
+    while True:
+
+        try:
+            cid, max_b_size, byte_num = chunks.get(timeout=0.01)
+        except queue.Empty:
+            break
+
+        conn.send(b"moreData")
+        conn.recv(1024)
+
+        open_file.seek(byte_num)
 
         packet = open_file.read(max_b_size)
-        skcon.send_str("MOREDATA")
-        skcon.recv_str()
 
-        val = "UNVALID"
-        while val == "UNVALID":
-            skcon.send_str("HASHSIN")
-            skcon.recv_str()
-            skcon.send_str("HASH1")
-            skcon.recv_str()
-            skcon.send_str(hashlib.md5(packet).hexdigest())
-            skcon.recv_str()
-            skcon.send_str("HASH2")
-            skcon.recv_str()
-            skcon.send_str(hashlib.md5(packet).hexdigest())
-            val = skcon.recv_str()
+        chunk_hash = hashlib.md5(packet).hexdigest()
 
-        skcon.send_str("DATAID")
-        skcon.recv_str()
-        skcon.send_list([b_num, len(packet)])
-        skcon.recv_str()
+        data = {
+            "byte": byte_num,
+            "hash": chunk_hash
+        }
+        conn.send(dumps(data))
 
-        val = "UNVALID"
-        while val == "UNVALID":
-            skcon.send_str("DATA")
-            skcon.recv_str()
-            skcon.send_bin(packet)
-            skcon.recv_str()
-            skcon.send_str("VALIDATION")
-            val = skcon.recv_str()
-        progress_bar.put(max_b_size)
-    else:
-        skcon.send_str("END")
-        skcon.close()
-        open_file.close()
+        valid = conn.recv(1024)
+
+        while valid == b"invalid":
+            conn.send(packet)
+
+            valid = conn.recv(1024)
+
+        progress_bar.put(len(packet))
+
+    conn.send(b"notData")
+    conn.recv(1024)
+
+    open_file.close()
+    conn.close()
 
 
 def start(file: str,
-          ip: str = "127.0.0.1", port: int = 55500, max_ports: int = 4, max_packet_size: int = 16384, language: str = "en"):
-
+          ip: str = "127.0.0.1", port: int = 55500, max_threads: int = 4, max_packet_size: int = 16384,
+          language: str = "en"):
     TRANSLATOR = LFV(language)
 
     if not os.path.exists(file):
@@ -93,93 +113,95 @@ def start(file: str,
     socket = sk.socket()
     socket.bind((ip, port))
     socket.listen(1)
-    ports = []
+
     min_port = 49152
     max_port = 65535
 
     t_port = min_port - 1
 
-    FPbar = tqdm(total=max_ports, desc=TRANSLATOR.get_text("FindPorts"), ascii=True, unit="Port", unit_scale=True,
+    transfer_ports = []
+
+    FPbar = tqdm(total=max_threads, desc=TRANSLATOR.get_text("FindPorts"), ascii=True, unit="Port", unit_scale=True,
                  dynamic_ncols=True, colour="green")
 
-    while len(ports) < max_ports and t_port < max_port:
+    while t_port < max_port and len(transfer_ports) < max_threads:
         t_port += 1
         if Check.check_port(ip, t_port):
-            ports.append(t_port)
+            transfer_ports.append(t_port)
             FPbar.update()
 
     FPbar.close()
-    if t_port == max_port:
-        print(TRANSLATOR.get_text("PortsFound") % len(ports))
 
     print(TRANSLATOR.get_text("ServerStarted") % (ip, port))
+
     info_socket, addr = socket.accept()
     print(TRANSLATOR.get_text("Connected") % (list(addr)[0], list(addr)[1]))
-    infocon = SocketController(info_socket)
     time.sleep(0.1)
 
-    IRbar = tqdm(total=5, desc=TRANSLATOR.get_text("SendInfo"), ascii=True, unit="i", unit_scale=True,
-                 dynamic_ncols=True, colour="green")
-    infocon.recv_str()
-    infocon.send_list(ports)
-    IRbar.update(1)
+    server_info = {
+        "maxThreads": max_threads,
+        "fileHash": file_hash,
+        "fileName": file_name,
+        "fileSize": file_size,
+        "maxPacketSize": max_packet_size,
+        "transferPorts": transfer_ports,
+    }
 
-    infocon.recv_str()
-    infocon.send_str(file_hash)
-    IRbar.update(1)
+    info_socket.send(dumps(server_info))
 
-    infocon.recv_str()
-    infocon.send_str(file_name)
-    IRbar.update(1)
+    client_info = loads(info_socket.recv(16384))
 
-    infocon.recv_str()
-    infocon.send_float(max_packet_size)
-    IRbar.update(1)
+    max_threads = min(max_threads, client_info["maxThreads"])
 
-    infocon.recv_str()
-    infocon.send_float(file_size)
-    IRbar.update(1)
+    transfer_sockets = []
 
-    IRbar.close()
+    for i in range(max_threads):
+
+        transfer_socket = sk.socket()
+        transfer_socket.bind((ip, transfer_ports[i]))
+        transfer_socket.listen(1)
+
+        info_socket.send(b"connect")
+
+        transfer_socket, addr = transfer_socket.accept()
+
+        transfer_sockets.append(transfer_socket)
+
+        isConnect = info_socket.recv(1024)
+
+        if isConnect != b"connected":
+            info_socket.send(b"close")
+            info_socket.close()
+            transfer_socket.close()
+
+            return
 
     threads = []
 
     work = False
 
     PQueue = queue.Queue()
-    for i in range(len(ports)):
-        port = ports[i]
 
-        s = sk.socket()
-        s.bind((ip, port))
-        s.listen(1)
-
-        infocon.send_str("CONNECT")
+    for i in range(max_threads):
         opened_file = open(file, "rb")
 
-        temp_socket, _ = s.accept()
-
-        skcontroller = SocketController(temp_socket)
-
-        infocon.recv_str()
-
-        torrent_server_thread = threading.Thread(target=torrent_server, args=(
-            skcontroller, PQueue, chunks, opened_file, lambda work: work),
-                                                 name=f"ServerTorrentThreadPort{t_port}")
+        torrent_server_thread = threading.Thread(target=torrent_server,
+                                                 args=(
+                                                 transfer_sockets[i], PQueue, chunks, opened_file, lambda work: work),
+                                                 name=f"ServerTorrentThread{i}")
         torrent_server_thread.start()
 
         threads.append(torrent_server_thread)
 
-    infocon.send_str("WORK")
-
-    infocon.close()
-
     start_time = time.perf_counter()
 
-    PbarTH = threading.Thread(target=Process.update_progress_bar, args=(file_size, PQueue, "Send File", "B"))
-    PbarTH.start()
+    PbarTH = threading.Thread(target=Process.update_progress_bar, args=(file_size, PQueue, "Send File", 1024, "B"))
+
+    info_socket.recv(1024)
+    info_socket.close()
 
     work = True
+    PbarTH.start()
 
     for thread in threads:
         thread.join()
