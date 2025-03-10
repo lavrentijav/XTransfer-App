@@ -9,7 +9,7 @@ DEBUG = False
 if "config.ini" not in os.listdir():
     conf = open("config.ini", "w")
     conf.write(
-        """
+        f"""
 [START]
 allowStart = False
 requestInfo = True
@@ -18,7 +18,7 @@ requestInfo = True
 file = test.txt
 ; the path to the file to send
 
-maxPorts = 4
+maxPorts = {os.cpu_count() * 2}
 ; maximum number of threads to send (recommended [all processor cores] * 2)
 
 hostIp = 0.0.0.0
@@ -26,8 +26,8 @@ hostIp = 0.0.0.0
 
 hostPort = 55500
 
-maxPacketSize = 4096
-; max data in 1 data packet in Bytes 512 - 32768 (recommend 4096 - 16384)
+maxPacketSize = 32768
+; max data in 1 data packet in Bytes recommend 32768. MAX 65435
 [Settings client]
 savePath = .
 hostIp = 127.0.0.1
