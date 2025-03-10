@@ -16,7 +16,7 @@ class Languages:
             "EnterMainPort": "Введите основной порт: ",
             "EnterMaxPorts": "Введите максимальное количество портов:",
             "EnterMaxPacketSize": "Введите максимальный размер пакета:",
-            "FilePath": "Путь к файлу: %s",
+            "FilePath": "Указанный файл %s готовится к отправке",
             "PacketSize": "Размер пакета: %d",
             "HostIP": "IP-адрес хоста: %s",
             "HostPort": "Порт хоста: %d",
@@ -32,10 +32,11 @@ class Languages:
             "MergeFile": "Создание файла",
             "ReceivingInfo": "Получение информации",
             "CalcHash": "Подсчёт хэша файла",
-            "IPNotAvailable": "IP адрес %s:%d не доступен",
+            "IPNotAvailable": "IP адрес %s:%s не доступен",
             "downFileDel": "Ошибка. Имя у файла, который будет загружен, уже существует. Заменить на новый файл [y/n]? ",
-            "downFileDelAnswerNotAllowed": "Данный ответ невозможен на поставленный вопрос",
-            "downProcess": "Подготовка файла"
+            "downFileDelAnswerNotAllowed": "Данный ответ '%s' невозможен на поставленный вопрос",
+            "downProcess": "Подготовка файла",
+            "FileNotFound": "Указанный файл %s не найден",
         },
         "en": {
             "ProcessedSuccess": "Processing: successful",
@@ -53,7 +54,7 @@ class Languages:
             "EnterMainPort": "Enter the main port: ",
             "EnterMaxPorts": "Enter the maximum number of ports:",
             "EnterMaxPacketSize": "Enter the maximum packet size:",
-            "FilePath": "File path: %s",
+            "FilePath": "The specified file %s is being prepared for sending",
             "PacketSize": "Packet size: %d",
             "HostIP": "Host IP address: %s",
             "HostPort": "Host port: %d",
@@ -71,8 +72,9 @@ class Languages:
             "CalcHash": "Calculating file hash",
             "IPNotAvailable": "IP address %s:%d is not available",
             "downFileDel": "Error. The name of the file to be downloaded already exists. Replace with a new file [y/n]? ",
-            "downFileDelAnswerNotAllowed": "This answer is not allowed for the given question",
-            "downProcess": "Preparing file"
+            "downFileDelAnswerNotAllowed": "This answer '%s' is not allowed for the given question",
+            "downProcess": "Preparing file",
+            "FileNotFound": "The specified file %s was not found",
         },
         "zh": {
             "ProcessedSuccess": "处理：成功",
@@ -90,7 +92,7 @@ class Languages:
             "EnterMainPort": "请输入主端口：",
             "EnterMaxPorts": "请输入最大端口数量：",
             "EnterMaxPacketSize": "请输入最大数据包大小：",
-            "FilePath": "文件路径：%s",
+            "FilePath": "指定的文件 %s 正在准备发送",
             "PacketSize": "数据包大小：%d",
             "HostIP": "主机 IP 地址：%s",
             "HostPort": "主机端口：%d",
@@ -108,8 +110,9 @@ class Languages:
             "CalcHash": "计算文件哈希",
             "IPNotAvailable": "IP 地址 %s:%d 不可用",
             "downFileDel": "错误。要下载的文件名已存在。是否替换为新文件 [y/n]? ",
-            "downFileDelAnswerNotAllowed": "该回答在此问题上不可用",
-            "downProcess": "准备文件"
+            "downFileDelAnswerNotAllowed": "该回答 '%s' 在此问题上不可用",
+            "downProcess": "准备文件",
+            "FileNotFound": "指定的文件 %s 未找到",
         },
         "es": {
             "ProcessedSuccess": "Procesamiento: exitoso",
@@ -127,7 +130,7 @@ class Languages:
             "EnterMainPort": "Ingrese el puerto principal: ",
             "EnterMaxPorts": "Ingrese la cantidad máxima de puertos:",
             "EnterMaxPacketSize": "Ingrese el tamaño máximo del paquete:",
-            "FilePath": "Ruta del archivo: %s",
+            "FilePath": "El archivo especificado %s se está preparando para enviar",
             "PacketSize": "Tamaño del paquete: %d",
             "HostIP": "Dirección IP del host: %s",
             "HostPort": "Puerto del host: %d",
@@ -145,8 +148,9 @@ class Languages:
             "CalcHash": "Calculando hash del archivo",
             "IPNotAvailable": "La dirección IP %s:%d no está disponible",
             "downFileDel": "Error. El nombre del archivo a descargar ya existe. ¿Reemplazar por un nuevo archivo [y/n]? ",
-            "downFileDelAnswerNotAllowed": "Esta respuesta no es válida para la pregunta planteada",
-            "downProcess": "Preparando archivo"
+            "downFileDelAnswerNotAllowed": "Esta respuesta '%s' no es válida para la pregunta planteada",
+            "downProcess": "Preparando archivo",
+            "FileNotFound": "El archivo especificado %s no fue encontrado",
         },
         "it": {
             "ProcessedSuccess": "Elaborazione: riuscita",
@@ -164,7 +168,7 @@ class Languages:
             "EnterMainPort": "Inserisci la porta principale: ",
             "EnterMaxPorts": "Inserisci il numero massimo di porte:",
             "EnterMaxPacketSize": "Inserisci la dimensione massima del pacchetto:",
-            "FilePath": "Percorso del file: %s",
+            "FilePath": "Il file specificato %s è in preparazione per l'invio",
             "PacketSize": "Dimensione del pacchetto: %d",
             "HostIP": "Indirizzo IP dell'host: %s",
             "HostPort": "Porta dell'host: %d",
@@ -182,8 +186,9 @@ class Languages:
             "CalcHash": "Calcolo hash del file",
             "IPNotAvailable": "L'indirizzo IP %s:%d non è disponibile",
             "downFileDel": "Errore. Il nome del file da scaricare esiste già. Sostituire con un nuovo file [y/n]? ",
-            "downFileDelAnswerNotAllowed": "Questa risposta non è consentita per la domanda posta",
-            "downProcess": "Preparazione file"
+            "downFileDelAnswerNotAllowed": "Questa risposta '%s' non è consentita per la domanda posta",
+            "downProcess": "Preparazione file",
+            "FileNotFound": "Il file specificato %s non è stato trovato",
         },
         "pl": {
             "ProcessedSuccess": "Przetwarzanie: zakończone sukcesem",
@@ -201,7 +206,7 @@ class Languages:
             "EnterMainPort": "Wprowadź główny port: ",
             "EnterMaxPorts": "Wprowadź maksymalną liczbę portów:",
             "EnterMaxPacketSize": "Wprowadź maksymalny rozmiar pakietu:",
-            "FilePath": "Ścieżka do pliku: %s",
+            "FilePath": "Określony plik %s jest przygotowywany do wysłania",
             "PacketSize": "Rozmiar pakietu: %d",
             "HostIP": "Adres IP hosta: %s",
             "HostPort": "Port hosta: %d",
@@ -219,8 +224,9 @@ class Languages:
             "CalcHash": "Obliczanie hasha pliku",
             "IPNotAvailable": "Adres IP %s:%d jest niedostępny",
             "downFileDel": "Błąd. Nazwa pliku, który ma być pobrany, już istnieje. Zastąpić nowym plikiem [y/n]? ",
-            "downFileDelAnswerNotAllowed": "Ta odpowiedź nie jest dozwolona na zadane pytanie",
-            "downProcess": "Przygotowanie pliku"
+            "downFileDelAnswerNotAllowed": "Ta odpowiedź '%s' nie jest dozwolona na zadane pytanie",
+            "downProcess": "Przygotowanie pliku",
+            "FileNotFound": "Określony plik %s nie został znaleziony",
         }
     }
 

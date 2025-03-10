@@ -13,7 +13,7 @@ def create_large_binary_file(filename, size_in_bytes, info: str = "create file")
     with tqdm(total=size_in_bytes, unit="B", unit_scale=True, desc=info, ascii=True, colour="green", unit_divisor=1024) as pbar:
         with open(filename, 'wb') as f:
             # Записываем данные по частям, чтобы не загружать весь файл в память
-            chunk_size = 1024 * 1024 * 8  # 1 МБ за раз
+            chunk_size = 1024 * 1024 * 4  # 1 МБ за раз
             for _ in range(size_in_bytes // chunk_size):
                 f.write(b'\0' * chunk_size)  # Записываем 1 МБ нулей
                 pbar.update(chunk_size)
@@ -30,7 +30,7 @@ def calculate_file_hash(file_path, hash_algorithm='sha1', info: str = "Calculate
     with open(file_path, 'rb') as f:
         with tqdm(total=GetSize(file_path), unit="B", unit_scale=True, desc=info,
                   ascii=True, colour="green", unit_divisor=1024) as pbar:
-            while chunk := f.read(1024 * 1024 * 10):
+            while chunk := f.read(1024 * 1024 * 4):
                 hash_func.update(chunk)
                 pbar.update(len(chunk))
 

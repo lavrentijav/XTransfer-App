@@ -125,7 +125,7 @@ def receive_data(host='127.0.0.1', info_port=-1, save_dir: str = ".", language: 
         ask = input(TRANSLATOR.get_text("downFileDel"))
         while ask not in ["y", "n", "yes", "no"]:
             print(TRANSLATOR.get_text("downFileDelAnswerNotAllowed") % (ask,))
-            input(TRANSLATOR.get_text("downFileDel"))
+            ask = input(TRANSLATOR.get_text("downFileDel"))
 
         max_id = 0
 

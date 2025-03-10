@@ -90,12 +90,12 @@ def start(file: str,
     TRANSLATOR = LFV(language)
 
     if not os.path.exists(file):
-        print(TRANSLATOR.get_text("FileNotFound"))
+        print(TRANSLATOR.get_text("FileNotFound") % (file,))
         time.sleep(10)
         exit(1)
 
     if not Check.check_port(ip, port):
-        print(TRANSLATOR.get_text("IPNotAvailable") % (ip, port))
+        print(TRANSLATOR.get_text("IPNotAvailable") % (str(ip), str(port)))
         time.sleep(10)
         exit(1)
 
