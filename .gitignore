@@ -19,10 +19,12 @@ lib64/
 parts/
 sdist/
 var/
+.venv/
 wheels/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
+.gitignore
 *.egg
 MANIFEST
 
@@ -169,3 +171,4 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+/test/
