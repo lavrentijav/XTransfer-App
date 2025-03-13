@@ -7,12 +7,12 @@ import socket as sk
 import threading
 import time
 import io
+import logging
+import sys
 
 from tqdm import tqdm
-
-import Check
-import Process
-from LocalizationForVersion_V0_0_2 import Languages as LFV
+import _process as xtlib
+from _localization import Languages as Localization
 
 GetSize = os.path.getsize
 PathJoin = os.path.join
@@ -21,19 +21,14 @@ BASEDIR = "ServerCache"
 
 
 def dumps(data):
-    try:
-        datat = json.dumps(data).encode("utf-8")
-        return datat
-    except:
-        print(data)
-        input()
+    return json.dumps(data).encode("utf-8")
 
 
 def loads(data):
     return json.loads(data.decode("utf-8"))
 
 
-def isjson(data):
+def is_json(data):
     try:
         json.loads(data.decode("utf-8"))
     except ValueError:
@@ -87,32 +82,32 @@ def torrent_server(conn: socket.socket, progress_bar: queue.Queue, chunks: queue
 def start(file: str,
           ip: str = "127.0.0.1", port: int = 55500, max_threads: int = 4, max_packet_size: int = 16384,
           language: str = "en"):
-    TRANSLATOR = LFV(language)
+    TRANSLATOR = Localization(language)
 
     if not os.path.exists(file):
-        print(TRANSLATOR.get_text("FileNotFound") % (file,))
+        logging.critical(TRANSLATOR.get_text("FileNotFound") % (file,))
         time.sleep(10)
         exit(1)
 
-    if not Check.check_port(ip, port):
-        print(TRANSLATOR.get_text("IPNotAvailable") % (str(ip), str(port)))
+    if not xtlib.port_is_free(ip, port):
+        logging.critical(TRANSLATOR.get_text("IPNotAvailable") % (str(ip), str(port)))
         time.sleep(10)
         exit(1)
 
     chunks = queue.Queue()
 
-    for i in range(Process.calculate_number_of_chunks(file, max_packet_size)):
+    for i in range(xtlib.calculate_number_of_chunks(file, max_packet_size)):
         chunks.put([i, max_packet_size, i * max_packet_size])
 
-    file_hash = Process.calculate_file_hash(file, "md5", info=TRANSLATOR.get_text("CalcHash"))
+    file_hash = xtlib.calculate_file_hash(file, "md5", info=TRANSLATOR.get_text("CalcHash"))
     file_size = GetSize(file)
 
-    file_name = Check.get_name_from_path(file)
+    file_name = xtlib.get_name_from_path(file)
 
-    print(TRANSLATOR.get_text("ProcessedSuccess"))
-    socket = sk.socket()
-    socket.bind((ip, port))
-    socket.listen(1)
+    logging.info(TRANSLATOR.get_text("ProcessedSuccess"))
+    my_conn = sk.socket()
+    my_conn.bind((ip, port))
+    my_conn.listen(1)
 
     min_port = 49152
     max_port = 65535
@@ -122,20 +117,20 @@ def start(file: str,
     transfer_ports = []
 
     FPbar = tqdm(total=max_threads, desc=TRANSLATOR.get_text("FindPorts"), ascii=True, unit="Port", unit_scale=True,
-                 dynamic_ncols=True, colour="green")
+                 dynamic_ncols=True, colour="green", file=sys.stdout)
 
     while t_port < max_port and len(transfer_ports) < max_threads:
         t_port += 1
-        if Check.check_port(ip, t_port):
+        if xtlib.port_is_free(ip, t_port):
             transfer_ports.append(t_port)
             FPbar.update()
 
     FPbar.close()
 
-    print(TRANSLATOR.get_text("ServerStarted") % (ip, port))
+    logging.info(TRANSLATOR.get_text("ServerStarted") % (ip, port))
 
-    info_socket, addr = socket.accept()
-    print(TRANSLATOR.get_text("Connected") % (list(addr)[0], list(addr)[1]))
+    info_socket, addr = my_conn.accept()
+    logging.info(TRANSLATOR.get_text("Connected") % (list(addr)[0], list(addr)[1]))
     time.sleep(0.1)
 
     server_info = {
@@ -187,7 +182,8 @@ def start(file: str,
 
         torrent_server_thread = threading.Thread(target=torrent_server,
                                                  args=(
-                                                 transfer_sockets[i], PQueue, chunks, opened_file, lambda work: work),
+                                                     transfer_sockets[i], PQueue, chunks, opened_file,
+                                                     lambda work: work),
                                                  name=f"ServerTorrentThread{i}")
         torrent_server_thread.start()
 
@@ -195,7 +191,7 @@ def start(file: str,
 
     start_time = time.perf_counter()
 
-    PbarTH = threading.Thread(target=Process.update_progress_bar, args=(file_size, PQueue, "Send File", 1024, "B"))
+    PbarTH = threading.Thread(target=xtlib.update_progress_bar, args=(file_size, PQueue, "Send File", 1024, "B"))
 
     info_socket.recv(1024)
     info_socket.close()
@@ -215,8 +211,8 @@ def start(file: str,
     if all_time <= 0.01:
         all_time += 1
 
-    transfer_rate = Check.get_size_in_optimum_unit(file_size / all_time, min_unit='B/s', step=1024)
+    transfer_rate = xtlib.num_in_optimum_unit(file_size / all_time, min_unit='B/s', step=1024)
 
-    print(TRANSLATOR.get_text("TransferSpeed") % ' '.join(list(map(str, transfer_rate.values()))))
+    logging.info(TRANSLATOR.get_text("TransferSpeed") % ' '.join(list(map(str, transfer_rate.values()))))
 
     time.sleep(10)

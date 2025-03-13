@@ -6,13 +6,14 @@ import socket as sk
 import threading
 import time
 import json
+import logging
 
-import Check
-import Process
-from LocalizationForVersion_V0_0_2 import Languages as LFV
+import _process as xtlib
+from _localization import Languages as LFV
 
 GetSize = os.path.getsize
 PathJoin = os.path.join
+
 
 class ThreadSafeFileWriter:
     def __init__(self, filename):
@@ -27,6 +28,7 @@ class ThreadSafeFileWriter:
     def close(self):
         self.file.close()  # Закрываем фай
 
+
 def isjson(data):
     try:
         json.loads(data.decode("utf-8"))
@@ -34,8 +36,10 @@ def isjson(data):
         return False
     return True
 
+
 def dumps(data):
     return json.dumps(data).encode("utf-8")
+
 
 def loads(data):
     return json.loads(data.decode("utf-8"))
@@ -114,7 +118,7 @@ def receive_data(host='127.0.0.1', info_port=-1, save_dir: str = ".", language: 
             my_socket.recv(1024)
             my_socket.close()
             transfer_socket.close()
-            print(TRANSLATOR.get_text("PortNotAvailable") % (host, transfer_ports[i]))
+            logging.info(TRANSLATOR.get_text("PortNotAvailable") % (host, transfer_ports[i]))
             my_socket.close()
             time.sleep(10)
             exit(1)
@@ -122,10 +126,12 @@ def receive_data(host='127.0.0.1', info_port=-1, save_dir: str = ".", language: 
     save_name = PathJoin(save_dir, file_name)
 
     if os.path.exists(save_name):
-        ask = input(TRANSLATOR.get_text("downFileDel"))
+        logging.warning(TRANSLATOR.get_text("downFileDel") + "\r")
+        ask = input()
         while ask not in ["y", "n", "yes", "no"]:
-            print(TRANSLATOR.get_text("downFileDelAnswerNotAllowed") % (ask,))
-            ask = input(TRANSLATOR.get_text("downFileDel"))
+            logging.warning(TRANSLATOR.get_text("downFileDelAnswerNotAllowed") % (ask,))
+            logging.info(TRANSLATOR.get_text("downFileDel") + "\r")
+            ask = input()
 
         max_id = 0
 
@@ -143,20 +149,18 @@ def receive_data(host='127.0.0.1', info_port=-1, save_dir: str = ".", language: 
 
     temp_name = PathJoin(save_dir, file_name[:file_name.rfind(".")] + ".crdownload")
 
-    Process.create_large_binary_file(temp_name, file_size, info=TRANSLATOR.get_text("downProcess"))
+    xtlib.create_large_binary_file(temp_name, file_size, info=TRANSLATOR.get_text("downProcess"))
 
     progress_queue = queue.Queue()
 
-    bar = threading.Thread(target=Process.update_progress_bar,
+    bar = threading.Thread(target=xtlib.update_progress_bar,
                            args=(file_size, progress_queue, TRANSLATOR.get_text("ReceivingFile"), 1024, "B", True),
                            name="ProgressBarThread")
-
 
     threads = []
     work = False
     tmp_file = ThreadSafeFileWriter(temp_name)
     for i in range(max_threads):
-
         th = threading.Thread(target=torrent_thread_client,
                               args=(transfer_sockets[i], progress_queue, tmp_file, block_size, lambda work: work),
                               name=f"ClientTorrentThread{i}")
@@ -184,15 +188,15 @@ def receive_data(host='127.0.0.1', info_port=-1, save_dir: str = ".", language: 
     if all_time <= 0.01:
         all_time += 1
 
-    transfer_rate = Check.get_size_in_optimum_unit(file_size / all_time, min_unit='B/s', step=1024)
+    transfer_rate = xtlib.num_in_optimum_unit(file_size / all_time, min_unit='B/s', step=1024)
 
-    print(TRANSLATOR.get_text("TransferSpeed") % ' '.join(list(map(str, transfer_rate.values()))))
+    logging.info(TRANSLATOR.get_text("TransferSpeed") % ' '.join(list(map(str, transfer_rate.values()))))
 
     time.sleep(0.1)
-    file_hash = Process.calculate_file_hash(temp_name, "md5", TRANSLATOR.get_text("CalcHash"))
+    file_hash = xtlib.calculate_file_hash(temp_name, "md5", TRANSLATOR.get_text("CalcHash"))
 
-    print(TRANSLATOR.get_text("DataTransferComplete"))
-    print(TRANSLATOR.get_text("HashCheck"), file_hash == final_hash)
+    logging.info(TRANSLATOR.get_text("DataTransferComplete"))
+    logging.info(TRANSLATOR.get_text("HashCheck") + " " + str(file_hash == final_hash))
 
     os.rename(temp_name, save_name)
 
